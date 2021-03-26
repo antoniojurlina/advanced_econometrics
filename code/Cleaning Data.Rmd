@@ -1,0 +1,243 @@
+---
+title: "Cleaning Data"
+subtitle: "Advanced Econometrics and Applications"
+author: "Antonio Jurlina"
+date: "3/3/2021"
+output: pdf_document
+geometry: margin=1in
+---
+
+```{r setup, include=FALSE}
+#-------- packages --------
+library(tidyverse)
+library(knitr)
+```
+
+##### **Why talk about data cleaning?** \
+Most econometrics classes and textbooks present students with nice, 
+picture-perfect data sets for applied problem set (look at the data 
+sets provided by our textbook). These data sets are “perfect”:
+
+  * No missing data
+  * No values are the product of an obvious typographical error
+  * Data is already transformed, e.g. log wage
+  * All the data is contained in one neat file, and so on.
+  
+In most cases, your research data is not "clean":
+
+  * It will come in several files covering difference questionnaire modules 
+  across different years
+  * Monetary values will have been recorded in nominal values
+  * Some people will have refused to answer some questions
+  * Other will have “trolled the enumerators” with unrealistic answers, and
+  * Whoever entered the data will have made typos.
+  
+The list of possible issues is almost endless.
+
+##### **How do you clean your data?** \
+Cleaning your data, usually, involves the following steps:
+
+  1. ALWAYS(!!!) save a “raw” copy of the un-adjusted data
+  2. Merge data files together (if applicable)
+  3. Inspect your data
+      * Graph histograms and scatter plots
+      * Look at summary statistics and correlations
+      * Look for obvious irregularities
+  4. Drop/adjust some observations due to:
+      * Missing values
+      * Outliers
+      * Typos, etc.
+  5. Transform variables
+  6. Generate new variables
+  
+\newpage
+  
+##### **Protocol.** 
+In this part of the lab we will focus on steps 3 and 4, inspecting you data set 
+and making data adjustments.
+
+$\bigstar$ **EXERCISE** $\bigstar$
+
+  (a) Load the Stata data file, labeled *wageV1.dta*, into memory and generate 
+  a variable named 'lwage' which equals the $log(wage)$.
+  
+```{stata eval=FALSE}
+// Clear previously stored data and set global options
+cls
+clear all
+cd "/Users/labteam/Google Drive/Spring 2021/ECO 531/data"
+
+use "wageV1.dta" // load data
+
+// Store results in a log file (diary)
+cd "/Users/labteam/Google Drive/Spring 2021/ECO 531/logs"
+log using "lab_03_log.txt", replace text
+
+// generate new variable (if it isn't already there)
+capture confirm variable lwage, exact
+if _rc {
+	generate lwage = log(wage)
+}
+```
+
+![Descriptive statistics](summary.png)  
+
+  (b) Use **browse** to examine the data – look for any patterns or flags that 
+  suggest something is amiss.
+
+```{stata eval=FALSE}
+browse
+```
+
+![Correlation matrix](correlation.png)
+
+  (c) Generate descriptive statistics and correlations for the variables *wage*, *educ*, *exper*, *sex*, *married*, and *region.* Again, look for any patterns or flags that suggest something is amiss.
+
+```{stata eval=FALSE}
+summarize wage educ exper sex married region
+
+correlate wage educ exper sex married region
+```
+
+  (d) Plot histograms for these variables to get a visual “feel” for the data.
+  
+```{stata eval=FALSE}
+histogram wage, name(wage)
+histogram educ, name(educ)
+histogram exper, name(exper)
+histogram sex, name(sex)
+histogram married, name(married)
+histogram region, name(region)
+``` 
+  
+![Histograms](histograms.png)
+
+  (e) Use **inspect** to explore each variable to see whether there are obvious irregularities: missing values, outliers, censoring, truncation, etc.
+
+```{stata eval=FALSE}
+inspect wage
+inspect educ
+inspect exper
+inspect sex
+inspect married
+inspect region
+``` 
+
+  (f) Graph scatter plots your dependent variables against each right-hand side variable to get a visual sense of what is going on as well as detect outliers and leverage points. e.g., **graph twoway (scatter wage educ) (lfit wage educ)**.
+  
+```{stata eval=FALSE}
+graph twoway (scatter wage educ) (lfit wage educ), name(wage_v_educ)
+graph twoway (scatter wage exper) (lfit wage exper), name(wage_v_exper)
+``` 
+
+![Scatter plots](scatter.png)
+
+##### **Missing data in Stata** \
+
+When working with missing data, you need to consider why that data is missing. In survey data, missing values may mean that the surveyor did not ask the question, that the respondent did not answer the question, or that the data are truly missing. (Some datasets have these three cases coded differently; others lump them together. Check your metadata/codebook to make sure you know what you are working with!) For numeric data, keep in mind that missing data are not the same as a value of zero. (This may seem obvious, but I have had many students nonchalantly say “oh, so we can just replace those with zeros...” Nope.) Consider this in the context of gas mileage. $MPG = 0$ is very different from $MPG =$ "I'm not sure".  
+
+Different statistical software code missing data differently. In Stata, if your variable is numeric and you are missing data, you will see '.' in your dataset. If you are working with string variables, the data will appear as ' ' (a blank space).
+
+Missing data values will affect how Stata handles your data.
+
+  * **summarize** - uses only non-missing values
+  * **tabulate** - missing values excluded by default; use missing option within tab to include missing values.
+  * **correlate** - calculated on pairs with non-missing data by default (pairwise deletion of missing data).
+  * **regress** - if an observation is missing data for a variable in the regression model, that observation is excluded from the regression (listwise deletion of missing data).
+  
+##### **Explore patterns in the missing data** \
+
+The **misstable** command allows a researcher to explore missing observations in the data – specifically, whether there are patterns across the missing data. This can be very useful as we need to make decisions about what to do about (if anything) the missing data.  
+
+$\bigstar$ **EXERCISE** $\bigstar$
+
+  (a) Use **misstable patterns** to explore the patterns of missing data. Does the missing data appear to be random? Are some variables more commonly missing?
+  
+```{stata eval=FALSE}
+misstable patterns
+``` 
+
+![Misstable patterns](misstable_patterns.png)
+
+> $65\%$ of the data has no missing pattern to it (Figure 5). Variables *educ* and *exper* are often missing without any apparent connection to other variables, and together they also constitute the most missing data. These missing variables seem to have a random pattern to them. Variables *race* and *nonwhite*, as evident from Figures 5 and 6. are missing together. The same can be said for variables  *west*, *region*, *south*, and *northeast*, as well as *sex* and *male*. This is only a pattern given that *nonwhite* is a dummy variable for *race*; *west*, *northeast*, and *south* are dummy variables for *region*; and *male* is one for *sex*. Since they are directly related, the missing pattern is not random, nor surprising. 
+
+  (b) Type **help misstable** to explore more options. Try some and see what happens.
+  
+![Misstable nested](misstable_nested.png)
+
+```{stata eval=FALSE}
+//help misstable
+
+misstable summarize
+misstable tree
+misstable nested
+```
+
+![Misstable summarize](misstable_summarize.png)
+
+##### **There are four main approaches to dealing with missing data:** \  
+
+ 1. Do nothing – drop incomplete observations
+    * Advantage: simple; works so long as data is missing at random
+    * Disadvantage: may throw out lots of good data; will introduce bias if missing data not random
+ 2.  Replace missing observations with unconditional mean or mode
+    * Advantage: simple; mean replacement won’t affect OLS slope estimates; works so long as data is missing at random
+    * Disadvantage: will introduce bias if missing data not random; reduce variability in data; wrong standard errors
+ 3. Replace missing observations with conditional mean
+    * Advantage: uses all available data; can work, even if data not missing at random (not always!)
+    * Disadvantage: overestimates model fit; wrong standard errors
+ 4. Use statistical imputation methods (we won’t do in this class)
+ 
+##### **Be aware:** \  
+
+  * Choose carefully and thoughtfully
+  * No matter the choice, it has consequences on the results!
+
+$\bigstar$ **EXERCISE** $\bigstar$
+
+  (a) Let’s start by creating three new variables, labeled 'educ_mean', 'educ_mode' and 'educ_ols' which replicate the data contained in *educ.* For example, generate $educ_mean = educ$ would do this for the first variable.
+  
+```{stata eval=FALSE}
+generate educ_mean = educ
+generate educ_mode = educ
+generate educ_ols = educ
+```
+
+  (b) Now, let’s replace the missing observations in *educ_mean* and *educ_mode* with the unconditional mean and mode, respectively. Hint: this information is contained in the **summarize** command and you will need to use the **replace** command.
+  
+```{stata eval=FALSE}
+summarize(educ), detail
+replace educ_mean = r(mean) if educ == .
+replace educ_mode = r(p50) if educ == .
+```
+
+  (c) Now let’s get more adventurous. Replace the missing observations in *educ_ols* with the conditional mean (OLS prediction). Hint: you will need to use the **regress** and **predict** commands.
+  
+```{stata eval=FALSE}
+regress educ exper wage male married race region numdep
+predict educhat
+summarize educhat
+replace educ_ols = r(mean) if educ == .
+drop educhat
+```
+
+  (d) Suppose we are interested in estimating the following relationship,
+  
+$$ln(wage) = \beta_0 + \beta_1educ+\beta_2exper+\beta_3exper^2 + u.$$
+
+> Run separate regressions using our four choices: do nothing (*educ*), mean replacement (*educ_mean*), mode replacement (*educ_mode*), and conditional mean replacement (*educ_ols*). Given this data set, and its unique characteristics, did your choice have much impact on the results? Which approach works "best" will depend on the characteristics of your data.
+
+
+```{stata eval=FALSE}
+regress lwage educ c.exper##c.exper
+regress lwage educ_mean c.exper##c.exper
+regress lwage educ_mode c.exper##c.exper
+regress lwage educ_ols c.exper##c.exper
+```
+
+
+![Regressions](regressions.png)
+
+>Our choices did not impact the results in significant ways. Estimates on the education coefficient are fairly robust to our interventions, and $R^2$ and $F$ statistics hold similar values across iterations. 
+
+
