@@ -63,12 +63,39 @@ $$P_{ij}=\frac{e^{\frac{V_{ik}}{\lambda_k}}\left[e^\frac{V_{ik}\lambda_k-V_{ik}}
 $$P_{ij}=\frac{e^{\frac{V_{ik}}{\lambda_k}}e^{V_{ik}}e^{-\frac{V_{ik}}{\lambda_k}}}{\sum_{l=1}^{k}e^{V_{il}}}$$
 $$P_{ik}=\frac{e^{V_{ik}}}{\sum_{l=1}^{k}e^{V_{il}}}$$
 
+  which is the choice probability for the multinomial logit.
+
 \newpage 
 
 ##### **Problem 2.**
 
 The file **count.dta**, which is taken from Gurmu (1997), contains data for 485 household heads who may or may not have visited a doctor during a certain period of time. The variables in the model are:
 
+```{r estimates, echo=FALSE, message=FALSE, fig.align="center"}
+tibble(" "       = c("nkids", "", "access", "", "status", "", "cons", ""),
+       "Poisson" = c("-0.176***", "(0.032)", "0.937***", "(0.193)", "0.290***", "(0.018)", "0.375***", "(0.110)"),
+       "NB1"     = c("-0.108**", "(0.050)", "0.537", "(0.332)", "0.264***", "(0.033)", "0.417**", "(0.186)"),
+       "NB2"     = c("-0.171***", "(0.058)", "0.420", "(0.373)", "0.315***", "(0.052)", "0.561***", "(0.212)")) %>%
+kable(caption = "Estimates", digits = 3)
+```
+
+```{r mfx, echo=FALSE, message=FALSE, fig.align="center"}
+tibble(" "       = c("nkids", "", "access", "", "status", ""),
+       "Poisson" = c("-0.283***", "(0.052)", "1.509***", "(0.315)", "0.467***", "(0.034)"),
+       "NB1"     = c("-0.174**", "(0.082)", "0.865", "(0.538)", "0.426***", "(0.061)"),
+       "NB2"     = c("-0.278***", "(0.100)", "0.685", "(0.608)", "0.515***", "(0.112)")) %>%
+kable(caption = "Marginal Effects", digits = 3)
+```
+
+```{r overdispersion, echo=FALSE, message=FALSE, fig.align="center"}
+tibble("test"      = c("Rule of Thumb", "Auxiliary Regression", "NB1 Delta", "NB2 Alpha"),
+       "value" = c("6.956", "2.175", "3.088", "1.810"),
+       "std. error" = c("-", "0.597", "0.404", "0.201"),
+       "statistic" = c("-", "3.64", "601.24", "599.61"),
+       "distribution" = c("-", "Student's t", "Chi-square", "Chi-square"),
+       "p. value" = c("-", "0.000", "0.000", "0.000")) %>%
+kable(caption = "Overdispersion Test Results", digits = 3)
+```
 
 \newpage  
 
