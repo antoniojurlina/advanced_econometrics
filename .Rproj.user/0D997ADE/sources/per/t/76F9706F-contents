@@ -1,0 +1,521 @@
+---
+title: "Maximum Likelihood Estimation"
+author: "Antonio Jurlina"
+date: "2/26/2021"
+output: pdf_document
+geometry: margin=1in
+---
+
+```{r setup, include=FALSE}
+#-------- packages --------
+library(tidyverse)
+library(knitr)
+```
+
+##### **Problem 1.**
+
+We derived the maximum likelihood (ML) estimator for the population parameters $\beta$ and $\sigma^2$ in the classical linear regression model($Y_i = X_i\beta + \varepsilon_i$). Alternatively, the ML estimator can be obtained by first “concentrating” the log-likelihood function with respect to one of the parameters. For example, concentrating the function with respect to $\sigma^2$ – this is a convenient approach for problems that contain variance terms. This means differentiating the log-likelihood function with respect to $\sigma^2$, solving the resulting first-order condition for $\sigma^2$ as a function of the data and the remaining parameters, and then substituting the result back into the original log-likelihood function. This yields the concentrated log-likelihood function. The ML estimator for $\beta$ can then be found my maximizing the concentrated log-likelihood function with respect to $\beta$. Here, we will demonstrate this process.
+
+  a) Deriving the ML estimator for $\sigma^2$ as a function of the data and the remaining parameters.
+  
+|           The probability density function[^1]  for the classical linear regression model, 
+|           assuming $Y_i \sim N(X_i\beta, \sigma^2)$, is:
+  
+  $$f(Y_i|X_i,\theta)=\frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{1}{2}\frac{(Y_i-X_i\beta)^2}{\sigma^2}}$$
+|           From there we proceed to set up the (log) likelihood equation:
+
+$$L(\theta|Y_N,X)=\prod_{i=1}^{N}f(Y_i|X_i,\theta)$$
+$$ln[L(\theta|Y_N,X)]=\sum_{i=1}^Nln\left[f(Y_i|X_i,\theta)\right]$$
+$$LL(\theta|Y_N,X)=\sum_{i=1}^Nln\left[\frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{1}{2}\frac{(Y_i-X_i\beta)^2}{\sigma^2}}\right]$$
+$$LL(\theta|Y_N,X)=\sum_{i=1}^Nln\left(\frac{1}{\sqrt{2\pi\sigma^2}}\right)+\sum_{i=1}^Nln\left(e^{-\frac{1}{2}\frac{(Y_i-X_i\beta)^2}{\sigma^2}}\right)$$
+$$LL(\theta|Y_N,X)=Nln\left(\frac{1}{\sqrt{2\pi\sigma^2}}\right)-\frac{1}{2}\frac{\sum_{i=1}^N(Y_i-X_i\beta)^2}{\sigma^2}$$
+$$LL(\theta|Y_N,X)=Nln(1)-Nln\left(\sqrt{2\pi\sigma^2}\right)-\frac{1}{2\sigma^2}\sum_{i=1}^N(Y_i-X_i\beta)^2$$
+$$LL(\theta|Y_N,X)=-\frac{N}{2}ln(2\pi)-\frac{N}{2}ln\left(\sigma^2\right)-\frac{1}{2\sigma^2}\sum_{i=1}^N(Y_i-X_i\beta)^2$$
+
+|           Now, we take a derivative of the log-likelihood function with respect to $\sigma^2$:
+
+$$\frac{\partial LL}{\partial \sigma^2}=-\frac{N}{2}\frac{1}{\sigma^2}+\frac{1}{2\sigma^2\sigma^2}\sum_{i=1}^N(Y_i-X_i\beta)^2$$
+
+|           Finally, setting the derivative to zero and solving for $\sigma^2$:
+
+$$-\frac{N}{2}\frac{1}{\sigma^2}+\frac{1}{2\sigma^2\sigma^2}\sum_{i=1}^N(Y_i-X_i\beta)^2=0$$
+
+$$\frac{-\sigma^2N+\sum_{i=1}^N(Y_i-X_i\beta)^2}{2\sigma^2\sigma^2}=0$$
+$$-\sigma^2N=-\sum_{i=1}^N(Y_i-X_i\beta)^2$$
+$$\sigma^2=\frac{1}{N}\sum_{i=1}^N(Y_i-X_i\beta)^2$$
+
+  b) Using the answer from part a), we will derive the concentrated log-likelihood function. 
+
+$$LL(\theta|Y_N,X)=-\frac{N}{2}ln(2\pi)-\frac{N}{2}ln\left(\sigma^2\right)-\frac{1}{2\sigma^2}\sum_{i=1}^N(Y_i-X_i\beta)^2$$
+
+|           Substituting in the answer for $\sigma^2$:
+
+$$LL(\theta|Y_N,X)=-\frac{N}{2}ln(2\pi)-\frac{N}{2}ln\left(\frac{1}{N}\sum_{i=1}^N(Y_i-X_i\beta)^2\right)-\frac{1}{\frac{2}{N}\sum_{i=1}^N(Y_i-X_i\beta)^2}\sum_{i=1}^N(Y_i-X_i\beta)^2$$
+
+$$LL(\theta|Y_N,X)=-\frac{N}{2}ln(2\pi)-\frac{N}{2}ln\left(\frac{1}{N}\sum_{i=1}^N(Y_i-X_i\beta)^2\right)-\frac{N}{2}$$
+
+|           Switching to matrix form:
+
+$$LL(\theta|Y_N,X)=-\frac{N}{2}ln(2\pi)-\frac{N}{2}ln\left[\frac{1}{N}(Y_N-X\beta)^T(Y_N-X\beta)\right]-\frac{N}{2}$$
+$$LL(\theta|Y_N,X)=-\frac{N}{2}ln(2\pi)-\frac{N}{2}ln\left[\frac{1}{N}\left(Y_N^TY_N-2\beta^TX^TY_N+\beta^TX^TX\beta\right)\right]-\frac{N}{2}$$
+
+  c) Using the concentrated log-likelihood (part b)) we derive the ML estimator for $\beta$.
+
+|           First, we take a derivative of the log-likelihood function with respect to $\beta$:
+
+$$\frac{\partial LL}{\partial \beta}=-\frac{N}{2}\frac{\frac{1}{N}\left(2X^TY_N+2X^TX\beta\right)}{\frac{1}{N}\left(Y_N^TY_N-2\beta^TX^TY_N+\beta^TX^TX\beta\right)}$$
+
+$$\frac{\partial LL}{\partial \beta}=\frac{-N\left(X^TY_N+X^TX\beta\right)}{Y_N^TY_N-2\beta^TX^TY_N+\beta^TX^TX\beta}$$
+
+|           Then, we set the derivative to zero and solve for $\beta$.
+
+$$\frac{-N\left(X^TY_N+X^TX\beta\right)}{Y_N^TY_N-2\beta^TX^TY_N+\beta^TX^TX\beta}=0$$
+
+$$X^TY_N+X^TX\beta\ = 0$$
+$$X^TX\beta=X^TY_N$$
+$$\widehat{\beta}_{MLE}=(X^TX)^{-1}X^TY_N$$
+
+  d) Using $\widehat{\beta}$ to adjust the ML estimator for $\sigma^2$ (from part a)).
+
+$$\sigma^2=\frac{1}{N}\sum_{i=1}^N(Y_i-X_i\beta)^2$$
+
+$$\sigma^2=\frac{1}{N}\left(Y_N-X\beta\right)^T\left(Y_N-X\beta\right)$$
+$$\sigma^2=\frac{1}{N}\left(Y_N^TY_N-2\beta^TX^TY_N+\beta^TX^TX\beta\right)$$
+
+|           Substituting in the answer for $\beta$:
+
+$$\sigma^2=\frac{1}{N}\left[Y_N^TY_N-2\left((X^TX)^{-1}X^TY_N\right)^TX^TY_N+\left((X^TX)^{-1}X^TY_N\right)^TX^TX\left((X^TX)^{-1}X^TY_N\right)\right]$$
+$$\sigma^2=\frac{1}{N}\left[Y_N^TY_N-2Y_N^TX\left((X^TX)^{-1}\right)^TX^TY_N+Y_N^TX\left((X^TX)^{-1}\right)^TX^TY_N\right]$$
+$$\sigma^2=\frac{1}{N}\left[Y_N^TY_N-Y_N^TX\left((X^TX)^{-1}\right)^TX^TY_N\right]$$
+
+|           Considering that $\left(A^{-1}\right)^T = \left(A^T\right)^{-1}$,
+
+$$\widehat{\sigma^2}_{MLE}=\frac{1}{N}\left[Y_N^TY_N-Y_N^TX(X^TX)^{-1}X^TY_N\right]$$
+
+  e) Now, we demonstrate that the order did not matter. That is, we show that the ML estimators of $\sigma^2$ and $\beta$ can be obtained by first concentrating with respect to $\beta$ and then maximizing the concentrated log-likelihood thereby obtained, with respect to $\sigma^2$.
+  
+$$\widehat{\beta}_{MLE}=(X^TX)^{-1}X^TY_N$$
+$$LL(\theta|Y_N,X)=-\frac{N}{2}ln(2\pi)-\frac{N}{2}ln\left(\sigma^2\right)-\frac{1}{2\sigma^2}\left(Y_N-X\beta\right)^T\left(Y_N-X\beta\right)$$
+$$LL(\theta|Y_N,X)=-\frac{N}{2}ln(2\pi)-\frac{N}{2}ln\left(\sigma^2\right)-\frac{1}{2\sigma^2}\left[Y_N^TY_N-Y_N^TX(X^TX)^{-1}X^TY_N\right]$$
+$$\frac{\partial LL}{\partial \sigma^2}=-\frac{N}{2\sigma^2}+\frac{Y_N^TY_N-Y_N^TX(X^TX)^{-1}X^TY_N}{2\sigma^2\sigma^2}$$
+$$-\frac{N}{2\sigma^2}+\frac{Y_N^TY_N-Y_N^TX(X^TX)^{-1}X^TY_N}{2\sigma^2\sigma^2}=0$$
+$$\frac{Y_N^TY_N-Y_N^TX(X^TX)^{-1}X^TY_N-\sigma^2N}{2\sigma^2\sigma^2}=0$$
+$$Y_N^TY_N-Y_N^TX(X^TX)^{-1}X^TY_N=\sigma^2N$$
+$$\widehat{\sigma^2}_{MLE}=\frac{1}{N}\left[Y_N^TY_N-Y_N^TX(X^TX)^{-1}X^TY_N\right]$$
+\newpage
+
+##### Problem 2. 
+
+Consider the nonlinear regression model (in which $\varepsilon_i \sim N(0, \sigma^2)$),
+
+$$y_i = \beta_1+\beta_2e^{\beta_3X_i}+\varepsilon_i.$$
+In this problem, we will be writing MATLAB code to perform a Monte Carlo experiment to evaluate the small sample properties of two numerical maximization approaches (a grid search (*fminsearch*) and a gradient-based approach (*fminunc*)) for estimating the population parameters (which we will call $\theta$) from equation above, using maximum likelihood. Our code will consist of two *m-files*: **1)** a base *m-file* that generates pseudo-data, calls the optimization routine, and stores estimates over the Monte Carlo loops, and **2)** a function *m-file* that calculates the log-likelihood.
+
+<br>
+
+To facilitate the pseudo-data experiment, suppose that $X$ is uniformly distributed in the population ($X\sim U(-3,6)$) and that the population parameters $\theta$ take the values $\beta_1 = 5$, $\beta_2 = 1.5$, $\beta_3 =-0.5$, and $\sigma^2 = 2$.
+
+###### **Part 1.** *Create and evaluate the pseudo-data experiment.*
+
+  a) Generating $N = 2500$ observations of pseudo-data consistent with this population.
+  
+![Pseudo-data histograms](homework_03_2b2.png)
+  
+```{octave eval=FALSE}
+n_obs = 2500;
+theta = [5 1.5 -0.5 2]';
+
+X_i = unifrnd(-3, 6, [n_obs, 1]);
+error = normrnd(0, theta(4,1), [n_obs, 1]);
+
+Y = theta(1,1) + theta(2,1) * exp(theta(3,1)*X_i) + error;
+
+data = [X_i, Y];
+```
+
+  b) Generating a table of summary statistics (average, median, standard deviation, minimum, and maximum) and histograms for $X$ and $y$.
+
+```{octave eval=FALSE}
+summary_stats = table([min(X_i), min(Y)]', ...
+                      [mean(X_i), mean(Y)]', ...
+                      [median(X_i), median(Y)]', ...
+                      [max(X_i), max(Y)]', ...
+                      [std(X_i), std(Y)]');
+summary_stats.Properties.VariableNames = {'min' 'mean' 'median' 'max' 'std'};
+summary_stats.Properties.RowNames = {'X' 'Y'};
+
+figure % open new figure
+subplot(3,1,1)
+histogram(X_i)
+xlabel('X')
+
+subplot(3,1,2)
+histogram(Y)
+xlabel('Y')
+
+subplot(3,1,3)
+histogram(error)
+xlabel('error')
+```
+
+```{r summary_stats, echo=FALSE, message=FALSE, fig.align="center"}
+tibble(" "      = c("X", "Y"),
+       "min"    = c(-3, -1.18),
+       "mean"   = c(1.45, 6.48),
+       "median" = c(1.46, 6.28),
+       "max"    = c(6.00, 15.64),
+       "std"    = c(2.58, 2.58)) %>%
+  kable(caption = "Pseudo-data summary statistics", digits = 2)
+```
+
+
+  c) MATLAB has several minimization commands, but no real maximization commands. This is not a problem for us because maximizing $f(x)$ is equivalent to minimizing $-f(x)$. We wrote a function that calculates the negative of the log-likelihood for a given value of $\theta = \{\beta, \sigma^2\}$. This function is based on a log-likelihood function derived from the initial model statement. 
+  
+$$y_i = \beta_1+\beta_2e^{\beta_3X_i}+\varepsilon_i$$
+$$LL(\theta|Y_N,X)=\sum_{i=1}^Nln\left[\frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{1}{2}\frac{(Y_i-\beta_1-\beta_2e^{\beta_3X_i})^2}{\sigma^2}}\right]$$
+$$LL(\theta|Y_N,X)=-\frac{N}{2}ln(2\pi)-\frac{N}{2}ln\left(\sigma^2\right)-\frac{1}{2\sigma^2}\sum_{i=1}^N(Y_i-\beta_1-\beta_2e^{\beta_3X_i})^2$$
+
+<br>
+  
+```{octave eval=FALSE}
+function [neg_LL] = objfun(theta, data)
+
+  sigmasq = exp(theta(4,1));
+  
+  error = data(:,2) - theta(1,1) - theta(2,1)*exp(theta(3,1)*data(:,1));
+  
+  [n, k] = size(data);
+  
+  LL = -n/2*log(2*pi)-n/2*log(sigmasq)-(1/(2*sigmasq))*error'*error;
+  
+  neg_LL = -1 * LL
+
+end
+```
+
+  d) In our base *m-file*, we use the commands $fminsearch$ and $fminunc$ to numerically solve the log-likelihood for estimates of $\theta$. Starting values will be  random draws from a standard uniform distribution ($U\sim (0,1)$).
+  
+```{octave eval=FALSE}
+options = optimset('Display','iter');
+ivalues = rand(4,1);
+theta_grid = fminsearch(@(theta) objfun(theta,data), ivalues, options);
+theta_grad = fminunc(@(theta) objfun(theta,data), ivalues, options);
+
+theta_grid(4) = theta_grid(4)^2;
+theta_grad(4) = theta_grad(4)^2;
+
+table(theta_grid,theta_grad, theta) % comparing the outputs and actual values
+```
+
+
+```{r prelim_MLE, echo=FALSE, message=FALSE, fig.align="center"}
+tibble(" "                 = c("Beta 1", "Beta 2", "Beta 3", "sigma_sq"),
+       "Grid estimate"     = c(5.07, 1.36, -0.53, 1.87),
+       "Gradient estimate" = c(5.07, 1.37, -0.53, 1.87),
+       "Real value"        = c(5.00, 1.50, -0.50, 2.00)) %>%
+  kable(caption = "Preliminary MLE outputs", digits = 2)
+```
+
+###### **Part 2.** *The bootstrapping method.*
+
+  e) Running models on data with unknown parameters would introduce much more uncertainty than we have at the moment. In such a situation, when choosing starting values, we are not quite sure what the optimal ones would be and run the risk of picking some that end up getting stuck on outlier estimate solutions (which the grid search method is especially vulnerable to, as shown in Figure 2). Since we intend to use bootstrapping to estimate some standard errors on our estimates, we need to run the models many times over. However, we need to ensure that starting values are optimal (without actually knowing what the best ones would be), and then perform B bootstrap repetitions. To cut down on computing time, we first run the grid search method (the more sensitive one) with a 100 different starting value combinations and then select the combination which produces estimates closest to the median of the resulting distribution. This is not a perfect approach, but it does help us create a set of values we are more confident in reusing across our model runs.  
+  
+```{octave eval=FALSE}
+initial_values = zeros(100,4);
+answer = zeros(100,4);
+
+parfor o = 1:100;
+    ivalues = rand(4,1);
+    answer(o,:) = fminsearch(@(theta) objfun(theta,data),...
+                             ivalues, options);
+    initial_values(o,:) = ivalues'
+end
+
+answer(:,4) = answer(:,4).^2
+
+row_polish = round(sum((answer - median(answer)).^2, 2),2);
+index = row_polish == min(row_polish);
+choose_one = randi(sum(index), 1, 1);
+initial_values_clean = initial_values(index,:);
+ivalues = initial_values_clean(choose_one,:)';
+```
+
+  f) With the bootstrap method, we calculate the standard errors for our $\theta$ estimates (for both theta_grid and theta_grad) using 10, 100, 200, and 1000 bootstrap samples. Our grid based search initially performs seemingly well in estimating the parameters of the model. However,  increasing the sample size slowly, from 10 to 100, 200, and finally a 1000 resamplings, makes the standard error jump up drastically and then settle around a slightly lower (albeit still higher) error. This is most likely due to the fact that initially our search performed well without settling on any local maxima. However, with more repetitions, it became more likely an outlier would occur and affect our average values. Eventually, with a large enough number of resamplings, outlier effect was somewhat negated, and the errors went down. Our gradient based search was more robust to this effect and ended up providing reliably small standard errors that remained the same or decreased. 
+
+
+![Bootstrapped parameter estimates (after 1000 runs)](homework_03_2f1.png)
+
+```{octave eval=FALSE}
+rng('shuffle')      % Randomize draws for bootstrap
+
+%B = 10;
+%B = 100;
+%B = 200;
+%B = 1000;
+theta_grid = zeros(B,4);
+theta_grad = zeros(B,4);
+parfor b = 1:B;
+    bsindex = randsample((1:n_obs),n_obs,true); 
+    sample = [data(bsindex, 1), data(bsindex, 2)];
+    grid = fminsearch(@(theta) objfun(theta,sample), ...
+        ivalues, options);
+    grad = fminunc(@(theta) objfun(theta,sample), ...
+        ivalues, options); 
+    
+    theta_grid(b,:) = grid;
+    theta_grad(b,:) = grad;
+end;
+
+theta_grid(:,4) = theta_grid_1000(:,4).^2;
+theta_grad(:,4) = theta_grad_1000(:,4).^2;
+
+figure % open new figure
+sgtitle('Parameter estimates from MLE');
+
+subplot(4,4,1)
+histogram(theta_grid_1000(:,1), 100)
+xline(theta(1,1),'r'); 
+xlabel('\beta_1 - grid');
+
+subplot(4,4,2)
+histogram(theta_grid_1000(:,2), 100)
+xline(theta(2,1),'r'); 
+xlabel('\beta_2 - grid');
+
+subplot(4,4,3)
+histogram(theta_grid_1000(:,3), 100)
+xline(theta(3,1),'r'); 
+xlabel('\beta_3 - grid');
+
+subplot(4,4,4)
+histogram(theta_grid_1000(:,4), 100)
+xline(theta(4,1),'r'); 
+xlabel('\sigma^2 - grid');
+
+subplot(4,4,5)
+histogram(theta_grad_1000(:,1), 100)
+xline(theta(1,1),'r'); 
+xlabel('\beta_1 - gradient');
+
+subplot(4,4,6)
+histogram(theta_grad_1000(:,2), 100)
+xline(theta(2,1),'r'); 
+xlabel('\beta_2 - gradient');
+
+subplot(4,4,7)
+histogram(theta_grad_1000(:,3), 100)
+xline(theta(3,1),'r'); 
+xlabel('\beta_3 - gradient');
+
+subplot(4,4,8)
+histogram(theta_grad_1000(:,4), 100)
+xline(theta(4,1),'r'); 
+xlabel('\sigma^2 - gradient');
+
+% switch out the value in the denominator for 10, 100, 200, or 1000
+
+var_cov_grid = (1/(1000-1))*(theta_grid-mean(theta_grid))'...
+                                *(theta_grid-mean(theta_grid));
+var_cov_grad = (1/(1000-1))*(theta_grad-mean(theta_grad))'...
+                                *(theta_grad-mean(theta_grad));
+```
+
+```{r std_errors, echo=FALSE, message=FALSE, fig.align="center"}
+tibble(" "               = c("Beta 1", "Beta 2", "Beta 3", "sigma_sq"),
+       "grid (10)"       = c(0.52, 0.68, 0.65, 0.32),
+       "gradient (10)"   = c(0.11, 0.20, 0.05, 0.08),
+       "grid (100)"      = c(0.54, 0.69, 1.79, 0.46),
+       "gradient (100)"  = c(0.08, 0.13, 0.03, 0.07),
+       "grid (200)"      = c(12.18, 12.10, 1.99, 0.63),
+       "gradient (200)"  = c(0.09, 0.13, 0.03, 0.08),
+       "grid (1000)"     = c(8.21, 8.14, 1.75, 0.71),
+       "gradient (1000)" = c(0.09, 0.13, 0.03, 0.08)) %>%
+  kable(caption = "Bootstrapped standard errors", digits = 2)
+```
+
+###### **Part 3.** *Monte Carlo experiment.*
+
+![Monte Carlo estimates histograms](homework_03_2g1.png)
+
+  g) Now, we repeat the data generation and estimation (using random normal draws for starting values instead), a total of $R = 500$ times, collecting information about the estimates for $\beta_1$, $\beta_2$, $\beta_3$, and $\sigma^2$ for each numerical optimization approach (*fminsearch* and *fminunc*). Specifically, we provide:
+  
+  + Summary statistics for the MLE estimates, including average, median, standard deviations, minumums and maximums.
+  + A histogram of the estimates of $\theta$ (using MATLAB functions *hist*, *figure*, and *subplot*).
+
+```{r MC1, echo=FALSE, message=FALSE, fig.align="center"}
+tibble(" "      = c("Beta 1", "Beta 2", "Beta 3", "sigma_sq"),
+       "min"    = c(-20.39, -883.75, -12.01, 1.60),
+       "mean"   = c(24.03, -17.40, -0.50, 2.14),
+       "median" = c(5.00, 1.49, -0.49, 1.95),
+       "max"    = c(891.09, 27.63, 4.60, 14.68),
+       "std"    = c(67.82, 67.63, 1.19, 1.00)) %>%
+  kable(caption = "Monte Carlo estimates with grid search (500 repetitions)", digits = 2)
+```
+
+
+
+```{octave eval=FALSE}
+%% Monte Carlo
+%R = 250;
+R = 500;
+%R = 25000;
+theta_grid_MC = zeros(R,4);
+theta_grad_MC = zeros(R,4);
+parfor r=1:R;
+    X_i = unifrnd(-3, 6, [n_obs, 1]);
+    error = normrnd(0, theta(4,1), [n_obs, 1]);
+    Y = theta(1,1) + theta(2,1) * exp(theta(3,1)*X_i) + error;
+    data = [X_i, Y];
+    
+    starting_values = randn(4,1);
+    
+    grid = fminsearch(@(theta) objfun(theta,data), ...
+        starting_values, options);
+    grad = fminunc(@(theta) objfun(theta,data), ...
+        starting_values, options); 
+    
+    theta_grid_MC(r,:) = grid;
+    theta_grad_MC(r,:) = grad;
+end
+
+theta_grid_MC(:,4) = theta_grid_MC(:,4).^2;
+theta_grad_MC(:,4) = theta_grad_MC(:,4).^2;
+
+%% Monte Carlo summary statistics 
+MC_grid = table(min(theta_grid_MC)', mean(theta_grid_MC)', ...
+                median(theta_grid_MC)', max(theta_grid_MC)', ...
+                std(theta_grid_MC)');
+  
+MC_grid.Properties.VariableNames = ...
+    {'min' 'mean' 'median' 'max' 'std'};
+MC_grid.Properties.RowNames=...
+    {'beta_1' 'beta_2' 'beta_3' 'sigma^2'};
+  
+MC_grad = table(min(theta_grad_MC)', mean(theta_grad_MC)', ...
+                median(theta_grad_MC)', max(theta_grad_MC)', ...
+                std(theta_grad_MC)');
+
+MC_grad.Properties.VariableNames = ...
+    {'min' 'mean' 'median' 'max' 'std'};
+MC_grad.Properties.RowNames=...
+    {'beta_1' 'beta_2' 'beta_3' 'sigma^2'};
+    
+MC_grid
+MC_grad
+
+%% Monte Carlo plots
+figure % open new figure
+sgtitle('Monte Carlo estimates');
+
+subplot(4,4,1)
+histogram(theta_grid_MC(:,1), 100)
+xline(theta(1,1),'g'); 
+xlabel('\beta_1 - grid');
+
+subplot(4,4,2)
+histogram(theta_grid_MC(:,2), 100)
+xline(theta(2,1),'g'); 
+xlabel('\beta_2 - grid');
+
+subplot(4,4,3)
+histogram(theta_grid_MC(:,3), 100)
+xline(theta(3,1),'g'); 
+xlabel('\beta_3 - grid');
+
+subplot(4,4,4)
+histogram(theta_grid_MC(:,4), 100)
+xline(theta(4,1),'g'); 
+xlabel('\sigma^2 - grid');
+
+subplot(4,4,5)
+histogram(theta_grad_MC(:,1), 100)
+xline(theta(1,1),'g'); 
+xlabel('\beta_1 - gradient');
+
+subplot(4,4,6)
+histogram(theta_grad_MC(:,2), 100)
+xline(theta(2,1),'g'); 
+xlabel('\beta_2 - gradient');
+
+subplot(4,4,7)
+histogram(theta_grad_MC(:,3), 100)
+xline(theta(3,1),'g'); 
+xlabel('\beta_3 - gradient');
+
+subplot(4,4,8)
+histogram(theta_grad_MC(:,4), 100)
+xline(theta(4,1),'g'); 
+xlabel('\sigma^2 - gradient');
+```
+
+```{r MC2, echo=FALSE, message=FALSE, fig.align="center"}
+tibble(" "      = c("Beta 1", "Beta 2", "Beta 3", "sigma_sq"),
+       "min"    = c(-2.60, -2.36, -2.71, 0.00),
+       "mean"   = c(4.25, 1.53, -0.42, 2.39),
+       "median" = c(4.96, 1.51, -0.49, 1.93),
+       "max"    = c(5.79, 5.11, 1.52, 29.21),
+       "std"    = c(1.62, 0.91, 0.40, 2.43)) %>%
+  kable(caption = "Monte Carlo estimates with gradient search (500 repetitions)", digits = 2)
+```
+
+
+  h) According to the standard error estimates from Figure 5, the gradient search approach seems to be better at estimating the parameters of the model. This result is consistent across all bootstrapping sample sizes. 
+
+
+```{r MC3, echo=FALSE, message=FALSE, fig.align="center"}
+tibble(" "      = c("Beta 1", "Beta 2", "Beta 3", "sigma_sq"),
+       "min"    = c(-15.09, -291.72, -10.02, 0.00),
+       "mean"   = c(20.33, -13.71, -0.40, 2.09),
+       "median" = c(5.01, 1.48, -0.49, 1.96),
+       "max"    = c(299.06, 22.42, 7.79, 9.26),
+       "std"    = c(51.38, 51.17, 1.15, 0.67)) %>%
+  kable(caption = "Monte Carlo estimates with grid search (250 repetitions)", digits = 2)
+```
+
+```{r MC4, echo=FALSE, message=FALSE, fig.align="center"}
+tibble(" "      = c("Beta 1", "Beta 2", "Beta 3", "sigma_sq"),
+       "min"    = c(-1.04, -2.00, -2.05, 0.03),
+       "mean"   = c(4.41, 1.54, -0.40, 2.38),
+       "median" = c(4.98, 1.49, -0.49, 1.93),
+       "max"    = c(7.74, 4.89, 2.66, 13.64),
+       "std"    = c(1.48, 0.78, 0.46, 2.12)) %>%
+  kable(caption = "Monte Carlo estimates with gradient search (250 repetitions)", digits = 2)
+```
+  
+  i) According to estimates from both grid and gradient search (Tables 4:9) we can see that both of our approaches are sensitive to sample size. Small samples are unlikely to show enough observations that would include outlier estimates, therebey potentially misleading our expected values. The gradient-based approach is less sensitive to the outlier effect, while the grid-based search algorithm settles on local maxima far from the searched-for global often enough that it warrants large sample sizes in order to mitigate these effects. 
+
+```{r MC5, echo=FALSE, message=FALSE, fig.align="center"}
+tibble(" "      = c("Beta 1", "Beta 2", "Beta 3", "sigma_sq"),
+       "min"    = c(-104.43, -3042.98, -14.49, 0.00),
+       "mean"   = c(23.96, -17.32, -0.45, 2.11),
+       "median" = c(5.01, 1.48, -0.49, 1.95),
+       "max"    = c(3050.47, 111.77, 8.35, 26.11),
+       "std"    = c(63.04, 62.83, 1.12, 0.86)) %>%
+  kable(caption = "Monte Carlo estimates with grid search (25,000 repetitions)", digits = 2)
+```
+
+```{r MC6, echo=FALSE, message=FALSE, fig.align="center"}
+tibble(" "      = c("Beta 1", "Beta 2", "Beta 3", "sigma_sq"),
+       "min"    = c(-9.01, -64.47, -5.48, 0.00),
+       "mean"   = c(4.29, 1.53, -0.40, 2.46),
+       "median" = c(4.97, 1.50, -0.49, 1.93),
+       "max"    = c(71.76, 13.69, 3.22, 319.26),
+       "std"    = c(1.72, 1.00, 0.43, 3.59)) %>%
+  kable(caption = "Monte Carlo estimates with gradient search (25,000 repetitions)", digits = 2)
+```
+
+
+  j) The results of the Monte Carlo estimation make sense given the way these problems were set up. At each repetition, starting values are sampled from a normal distribution (assuming no prior knowledge that would aid in this selection process). Grid search, which we expected to be more sensitive to settling on local maxima, indeed does seem to do so whenever particularly "mistaken" initial random draws are selected. The gradient-based approach is less sensitive to this and ends up with a much smaller variance of estimates across all Monte Carlo repetitions. Finally, it is important to note that, when bootstsrapping, we selected values more likely to converge towards true estimates, while during the Monte Carlo experiment, initial values were redrawn constantly. Had the Monte Carlo initial values been more optimized according to the true parameter values, we would have seen much less variance in final estimates. 
+
+
+[^1]: the general form:
+  $$f(x)=\frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{1}{2}\frac{(x-\mu)^2}{\sigma^2}}$$
+
+\newpage  
+
+``` {r session, echo = FALSE}
+sessionInfo()
+```
+
+
+
