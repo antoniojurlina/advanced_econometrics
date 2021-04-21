@@ -71,6 +71,18 @@ $$P_{ik}=\frac{e^{V_{ik}}}{\sum_{l=1}^{k}e^{V_{il}}}$$
 
 The file **count.dta**, which is taken from Gurmu (1997), contains data for 485 household heads who may or may not have visited a doctor during a certain period of time. The variables in the model are:
 
+ + $y_i$ - Number of doctor visits
+ + $C_i$ - Number of children in the household
+ + $A_i$ - A measure of access to healthcare
+ + $H_i$ - A measure of health status
+ 
+###### **Marginal Effects**
+
+First, I estimate a log-linear Poisson regression model to explain the variable $y_i$ where
+
+$$\lambda_i=e^{\beta_0+\beta_1C_i+\beta_2A_i+\beta_3H_i}$$
+and the results are presented in Tables 1 and 2. 
+
 ```{r estimates, echo=FALSE, message=FALSE, fig.align="center"}
 tibble(" "       = c("nkids", "", "access", "", "status", "", "cons", ""),
        "Poisson" = c("-0.176***", "(0.032)", "0.937***", "(0.193)", "0.290***", "(0.018)", "0.375***", "(0.110)"),
@@ -79,6 +91,8 @@ tibble(" "       = c("nkids", "", "access", "", "status", "", "cons", ""),
 kable(caption = "Estimates", digits = 3)
 ```
 
+According to the Poisson model (Table 2), for every additional child, the number of doctor visits decreases by 28%, on average. For every unit increase in the access to health care index, the number of doctor visits increases by 150%, on average. For every unit improvement in health status, the number of doctor visits increases by 47%, on average. According to the Negative Binomial Type 1 model (Table 2), for every additional child, the number of doctor visits decreases by 17%, on average. For every unit increase in the access to health care index, the number of doctor visits increases by 87%, on average. For every unit improvement in health status, the number of doctor visits increases by 43%, on average. According to the Negative Binomial Type 2 model (Table 2), for every additional child, the number of doctor visits decreases by 28%, on average. For every unit increase in the access to health care index, the number of doctor visits increases by 69%, on average. For every unit improvement in health status, the number of doctor visits increases by 52%, on average. 
+
 ```{r mfx, echo=FALSE, message=FALSE, fig.align="center"}
 tibble(" "       = c("nkids", "", "access", "", "status", ""),
        "Poisson" = c("-0.283***", "(0.052)", "1.509***", "(0.315)", "0.467***", "(0.034)"),
@@ -86,6 +100,14 @@ tibble(" "       = c("nkids", "", "access", "", "status", ""),
        "NB2"     = c("-0.278***", "(0.100)", "0.685", "(0.608)", "0.515***", "(0.112)")) %>%
 kable(caption = "Marginal Effects", digits = 3)
 ```
+
+\newpage 
+
+###### **Overdispersion**
+
+In the presence of overdispersion, Poisson model estimates from maximum likelihood estimation will still be consistent. However, the standard errors are going to be incorrect, rendering any subsequent hypothesis testing (or p-value interpretation) difficult. This issue stems from the fact that in a Poisson model, the mean and the variance cannot be estimated separately from one another, and if the data set does not match this property, over (or under) dispersion is present. 
+
+We start by checking for any presence of overdispersion in the Poisson model with a simple rule of thumb test. If the ratio of variance to the mean (in the unconditional data) is larger than 2, it is likely that overdispersion is present. Indeed, the value of 6.7 suggests that there is likely overdispersion (Table 3). Furthermore, I run the Auxiliary Regression Test (proposed by Cameron and Trivedi in 1996). According to the results, we can reject the null that there is no overdispersion present (Table 3). Finally, we will check for the presence of overdispersion in both Negative Binomial model results. Again, according to the results in Table 3, we can reject the null hypothesis that there is no overdispersion in the simple Poisson specification, with high confidence. This indicates that the estimates from the Negative Binomial models are likely to be more efficient. This set of results consistently confirms that there is likely overdispersion present in the Poisson model which assumes mean and variance are equal and provides no correction for the standard errors. 
 
 ```{r overdispersion, echo=FALSE, message=FALSE, fig.align="center"}
 tibble("test"      = c("Rule of Thumb", "Auxiliary Regression", "NB1 Delta", "NB2 Alpha"),
@@ -96,6 +118,89 @@ tibble("test"      = c("Rule of Thumb", "Auxiliary Regression", "NB1 Delta", "NB
        "p. value" = c("-", "0.000", "0.000", "0.000")) %>%
 kable(caption = "Overdispersion Test Results", digits = 3)
 ```
+
+###### **Conclusion**
+
+The estimates from the two Negative Binomial models are more likely to be efficient than the ones from the Poisson. While all three are expected to be consistent, we can notice that statistical significance on the marginal effects across models does not hold for the *access* variable when the standard errors are corrected. For the variables *status* and *nkids*, statistical significance remains, and their values are mostly similar to the Poisson (thus supporting our consistency expectation). We can notice that even while the marginal effects remained mostly equal, standard errors increased slightly with the Negative Binomial Type 1 model. They increased even more with the Negative Binomial Type 2 model, which allows for even higher flexibility than the Type 1, relative to the Poisson model. 
+
+\newpage 
+
+###### **Stata code**
+
+```{stata eval=FALSE}
+/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+> @ Authors: Antonio J            @
+> @ Date: 4/19/2021               @
+> @ Filename: problem_set_04.do   @
+> @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
+
+/*-----------------------------------------
+@ Loading data and initializing log file  @
+-----------------------------------------*/
+// Clear previously stored data and set global options
+cls
+clear all
+cd "antoniojurlina/Projects/advanced_econometrics/data"
+
+use "count.dta" // load data
+
+// Store results in a log file (diary)
+cd "antoniojurlina/Projects/advanced_econometrics/output"
+log using "project_04_log.txt", replace text
+
+
+/*-----------------------------------
+@ Models                    		@
+-----------------------------------*/
+// Poisson
+qui poisson visits nkids access status
+estimates store poiss
+predict visits_hat
+qui margins, dydx(*) post
+estimates store me_poiss
+
+// Negative Binomial Type 1 model
+qui nbreg visits nkids access status, dispersion(constant)
+estimates store nb1
+qui margins, dydx(*) post
+estimates store me_nb1
+
+// Negative Binomial Type 2 model
+qui nbreg visits nkids access status, dispersion(mean)
+estimates store nb2
+qui margins, dydx(*) post
+estimates store me_nb2
+
+/*-----------------------------------
+@ Tests                      		@
+-----------------------------------*/
+// Rule of thumb
+qui summarize visits
+display "Rule of Thumb Test: " round(r(sd)^2/r(mean), 0.001)
+
+// Auxiliary regression
+generate aux = ((visits-visits_hat)^2-visits)/visits_hat
+qui regress aux visits_hat, noconstant
+display "Auxiliary Regression Test: " _b[visits_hat]
+
+/*-----------------------------------
+@ Results                      		@
+-----------------------------------*/
+// Generate a table of estimates
+esttab poiss nb1 nb2, ///
+	mtitles("Poisson" "NB1" "NB2") b(3) se(3) ///
+	star(* 0.1 ** 0.05 *** 0.01) nogaps
+
+// Generate a table of margins
+esttab me_poiss me_nb1 me_nb2, ///
+	mtitles("Poisson" "NB1" "NB2") b(3) se(3) ///
+	star(* 0.1 ** 0.05 *** 0.01) nogaps
+
+// Close log file
+log close
+```
+  
+
 
 \newpage  
 

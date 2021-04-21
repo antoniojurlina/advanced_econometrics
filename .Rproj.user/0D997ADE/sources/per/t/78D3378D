@@ -3,7 +3,7 @@
     "path": "~/Projects/advanced_econometrics/code/Discrete Choice and Count Models.Rmd",
     "project_path": "code/Discrete Choice and Count Models.Rmd",
     "type": "r_markdown",
-    "hash": "2534240512",
+    "hash": "1772464569",
     "contents": "",
     "dirty": false,
     "created": 1618774802741.0,
@@ -12,16 +12,17 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "94,71",
-        "scrollLine": "86",
-        "last_setup_crc32": "4229B995867df46"
+        "cursorPosition": "199,9",
+        "scrollLine": "174",
+        "last_setup_crc32": "",
+        "ignored_words": "overdispersion,Overdispersion,Trivedi\n"
     },
     "folds": "",
-    "lastKnownWriteTime": 1618959672,
+    "lastKnownWriteTime": 1619045803,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1618959672645,
+    "last_content_update": 1619045803813,
     "read_only": false,
     "read_only_alternatives": []
 }

@@ -1,7 +1,0 @@
-"0","tibble(""test""      = c(""Rule of Thumb"", ""Auxiliary Regression"", ""NB1 Delta"", ""NB2 Alpha""),"
-"0","       ""value"" = c(""6.956"", ""2.175"", ""3.088"", ""1.810""),"
-"0","       ""std. error"" = c(""-"", ""0.597"", ""0.404"", ""0.201""),"
-"0","       ""statistic"" = c(""-"", ""3.64"", ""601.24"", ""599.61""),"
-"0","       ""distribution"" = c(""-"", ""Student's t"", ""Chi-square"", ""Chi-square""),"
-"0","       ""p. value"" = c(""-"", ""0.000"", ""0.000"", ""0.000"")) %>%"
-"0","kable(caption = ""Overdispersion Test Results"", digits = 3)"
